@@ -1,0 +1,27 @@
+name: Daily portfolio update
+
+on:
+  schedule:
+    # 10:45 UTC = 4:15 PM IST, Monday to Friday (NSE closes at 3:30 PM IST)
+    - cron: "45 10 * * 1-5"
+  workflow_dispatch: # "Run workflow" button for manual tests
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python agent.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # manual runs always send, even on weekends and market holidays
+          FORCE_SEND: ${{ github.event_name == 'workflow_dispatch' }}
